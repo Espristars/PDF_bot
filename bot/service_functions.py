@@ -72,7 +72,7 @@ async def file_convert_text_to_json(text: str, index_col: int, index_str: int) -
                 key_value = row.pop(main_key)
                 result.append({key_value: row})
         else:
-            raise ValueError
+            raise ValueError("Неверное количество строк для заданных столбцов и строк.")
     else:
         result = []
         columns = [lines[i * (index_str + 1):(i + 1) * (index_str + 1)] for i in range(index_col)]
