@@ -52,22 +52,42 @@ async def file_convert_text_to_json(text: str, index_col: int, index_str: int) -
     lines = [line.strip() for line in text.strip().splitlines() if line.strip()]
 
     if len(lines) != index_col * (index_str + 1):
-        raise ValueError("Неверное количество строк для заданных столбцов и строк.")
+        if len(lines) == index_str + 1:
+            headers = re.split(r'\s+', lines[0])
+            result = []
 
-    result = []
-    columns = [lines[i * (index_str + 1):(i + 1) * (index_str + 1)] for i in range(index_col)]
+            for line in lines[1:]:
+                parts = re.split(r'\s+', line, maxsplit=len(headers) - 1)
+                if len(parts) != len(headers):
+                    continue
 
-    headers = [col[0] for col in columns]
-    values_per_row = list(zip(*[col[1:] for col in columns]))
+                row = {}
+                for key, value in zip(headers, parts):
+                    try:
+                        row[key] = float(value.replace(',', '.'))
+                    except ValueError:
+                        row[key] = value
 
-    for row in values_per_row:
-        key = row[0]
-        result.append({
-            key: {
-                headers[i]: float(row[i]) if row[i].replace('.', '', 1).isdigit() else row[i]
-                for i in range(1, index_col)
-            }
-        })
+                main_key = headers[0]
+                key_value = row.pop(main_key)
+                result.append({key_value: row})
+        else:
+            raise ValueError
+    else:
+        result = []
+        columns = [lines[i * (index_str + 1):(i + 1) * (index_str + 1)] for i in range(index_col)]
+
+        headers = [col[0] for col in columns]
+        values_per_row = list(zip(*[col[1:] for col in columns]))
+
+        for row in values_per_row:
+            key = row[0]
+            result.append({
+                key: {
+                    headers[i]: float(row[i]) if row[i].replace('.', '', 1).isdigit() else row[i]
+                    for i in range(1, index_col)
+                }
+            })
 
     os.makedirs("photos", exist_ok=True)
     filename = os.path.join("photos", "file.json")
